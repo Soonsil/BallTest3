@@ -18,9 +18,10 @@ import javax.microedition.khronos.opengles.GL10;
 
 import io.github.avantgarde95.balltest.model.Circle;
 import io.github.avantgarde95.balltest.model.Polygon;
-import io.github.avantgarde95.balltest.physics.CircleBody2D;
-import io.github.avantgarde95.balltest.physics.PolygonBody2D;
-import io.github.avantgarde95.balltest.physics.Vector2D;
+import io.github.avantgarde95.balltest.physics2d.CircleBody2D;
+import io.github.avantgarde95.balltest.physics2d.CirclePolygonCollision2D;
+import io.github.avantgarde95.balltest.physics2d.PolygonBody2D;
+import io.github.avantgarde95.balltest.physics2d.Vector2D;
 
 /**
  * Created by avantgarde on 2017-01-20.
@@ -48,14 +49,12 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
 
     private Circle ball;
     private CircleBody2D ballBody;
+    private CirclePolygonCollision2D ballCollision;
 
-    private Polygon rock1;
-    private Polygon rock2;
-    private Polygon rock3;
-
-    private PolygonBody2D rockBody1;
-    private PolygonBody2D rockBody2;
-    private PolygonBody2D rockBody3;
+    int rockCount;
+    float[][][] rockVertices;
+    private Polygon[] rocks;
+    private PolygonBody2D[] rockBodies;
 
     public MyGLRenderer(Context context) {
         this.context = context;
@@ -79,42 +78,48 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
         );
 
         // init. ball
-        float ballRadius = 0.13f;
+        float ballRadius = 0.1f;
         ball = new Circle(this, ballRadius);
 
         ballBody = new CircleBody2D(
-                1.0,
-                new Vector2D(-0.3, 0.4),
-                new Vector2D(0, 0),
-                1.0,
-                (double) ballRadius
+                1,
+                new Vector2D(-0.25f, 1.0f),
+                new Vector2D(0.0f, 0.0f),
+                ballRadius
         );
 
-        // init. rock1
-        float[][] rock1Vertices = {
-                {0.0f, -0.4f},
-                {-0.1f, -0.5f},
-                {-0.2f, -0.6f},
-                {-0.5f, -0.6f},
-                {-0.1f, -0.7f},
-                {0.0f, -0.4f}
+        // init. rocks
+        rockVertices = new float[][][]{
+                {
+                        {0.0f, -0.4f},
+                        {-0.1f, -0.5f},
+                        {-0.2f, -0.6f},
+                        {-0.9f, -0.55f},
+                        {-0.1f, -0.7f},
+                        {0.0f, -0.4f}
+                },
+                {
+                        {-0.2f, 0.35f},
+                        {-0.1f, 0.4f},
+                        {0.2f, 0.2f},
+                        {0.3f, 0.0f},
+                        {0.1f, 0.1f},
+                        {-0.2f, 0.35f}
+                }
         };
 
-        rock1 = new Polygon(this, rock1Vertices);
-        rockBody1 = new PolygonBody2D(1.0, new Vector2D(0, 0), new Vector2D(0, 0), 1.0, floatsToVectors(rock1Vertices));
+        rockCount = rockVertices.length;
+        rocks = new Polygon[rockCount];
+        rockBodies = new PolygonBody2D[rockCount];
 
-        // init. rock2
-        float[][] rock2Vertices = {
-                {-0.2f, 0.4f},
-                {-0.1f, 0.4f},
-                {0.2f, 0.2f},
-                {0.3f, 0.0f},
-                {0.1f, 0.1f},
-                {-0.2f, 0.4f}
-        };
+        for (int i = 0; i < rockCount; i++) {
+            rocks[i] = new Polygon(this, rockVertices[i]);
+            rockBodies[i] = new PolygonBody2D(
+                    1.0f, new Vector2D(0, 0), new Vector2D(0, 0), rockVertices[i]);
+        }
 
-        rock2 = new Polygon(this, rock2Vertices);
-        rockBody2 = new PolygonBody2D(1.0, new Vector2D(0, 0), new Vector2D(0, 0), 1.0, floatsToVectors(rock2Vertices));
+        // init. collision
+        ballCollision = new CirclePolygonCollision2D(ballBody);
 
         // calc. view matrix
         Matrix.setIdentityM(viewRotationMatrix, 0);
@@ -136,25 +141,32 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
         System.arraycopy(tempMatrix, 0, viewMatrix, 0, 16);
 
         // physics
-        Vector2D gravity = new Vector2D(0, -0.001);
+        Vector2D gravity = new Vector2D(0.0f, -0.0005f);
+        float preserve = 0.1f;
+
         ballBody.addForce(gravity);
-        ballBody.integrateForces();
+        ballBody.integrateForce(1.0f);
 
-        ballBody.collidePolygon(rockBody1, 0.3);
-        ballBody.collidePolygon(rockBody2, 0.3);
+        for (PolygonBody2D rockBody : rockBodies) {
+            if (ballCollision.collidePolygon(rockBody, preserve)) {
+                break;
+            }
+        }
 
-        // move models
-        float[] ballMatrix = new float[16];
-        float ballX = (float) ballBody.getPosition().x;
-        float ballY = (float) ballBody.getPosition().y;
-        Matrix.setIdentityM(ballMatrix, 0);
-        Matrix.translateM(ballMatrix, 0, ballX, ballY, 0);
-        ball.setMatrix(ballMatrix);
+        // set matrix from physics
+        ball.setMatrix(ballBody.evalMatrix());
+
+        // XXX : These lines are unneeded if rocks' position is always (0, 0)
+//        for (int i = 0; i < rockCount; i++) {
+//            rocks[i].setMatrix(rockBodies[i].evalMatrix());
+//        }
 
         // draw models
         ball.draw(projMatrix, viewMatrix, lightPos);
-        rock1.draw(projMatrix, viewMatrix, lightPos);
-        rock2.draw(projMatrix, viewMatrix, lightPos);
+
+        for (Polygon rock : rocks) {
+            rock.draw(projMatrix, viewMatrix, lightPos);
+        }
     }
 
     @Override
@@ -213,15 +225,5 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
         }
 
         return null;
-    }
-
-    private Vector2D[] floatsToVectors(float[][] arr) {
-        Vector2D[] vectors = new Vector2D[arr.length];
-
-        for (int i = 0; i < vectors.length; i++) {
-            vectors[i] = new Vector2D((double) arr[i][0], (double) arr[i][1]);
-        }
-
-        return vectors;
     }
 }
