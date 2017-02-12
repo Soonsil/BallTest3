@@ -11,6 +11,7 @@ import io.github.avantgarde95.balltest.renderer.MyGLRenderer;
 
 public class Circle extends Model {
     private float radius;
+    private float[][] vertices2D;
 
     public Circle(MyGLRenderer renderer, float radius, int fanCount) {
         super(renderer);
@@ -20,6 +21,7 @@ public class Circle extends Model {
         // gen. vertices
         List<float[]> fans = new ArrayList<>();
         float angle = (float) (2.0 * Math.PI / fanCount);
+        vertices2D = new float[fanCount][2];
 
         for (int i = 0; i < fanCount; i++) {
             fans.add(new float[]{
@@ -35,6 +37,9 @@ public class Circle extends Model {
                     radius * (float) Math.sin(i * angle),
                     0
             });
+
+            vertices2D[i][0] = radius * (float) Math.cos(i * angle);
+            vertices2D[i][1] = radius * (float) Math.sin(i * angle);
         }
 
         // gen. normals
@@ -64,5 +69,9 @@ public class Circle extends Model {
         }
 
         return arr;
+    }
+
+    public float[][] getVertices2D() {
+        return vertices2D;
     }
 }
