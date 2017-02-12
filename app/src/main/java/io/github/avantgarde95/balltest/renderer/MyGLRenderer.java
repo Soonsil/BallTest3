@@ -103,6 +103,7 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
 
         for (int i = 0; i < rockCount; i++) {
             rocks[i] = new Circle(this, rockRadiuses[i], rockFanCounts[i]);
+            rocks[i].setColor(new float[]{0.0f, 1.0f, 0.0f});
 
             rockBodies[i] = new PolygonBody2D(
                     1.0f,
