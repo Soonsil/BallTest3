@@ -26,6 +26,14 @@ public class MyGLSurfaceView extends GLSurfaceView {
         setRenderer(renderer);
     }
 
+    public void resetRenderer() {
+        renderer.initBall();
+    }
+
+    public void delayRenderer(int delay) {
+        renderer.setDelay(delay);
+    }
+
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         int count = event.getPointerCount();

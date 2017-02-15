@@ -29,6 +29,8 @@ import io.github.avantgarde95.balltest.physics2d.Vector2D;
 public class MyGLRenderer implements GLSurfaceView.Renderer {
     private Context context; // for using Activity.getAssets()
 
+    private int delay = 0;
+
     private float minDist = 1.0f;
     private float maxDist = 30.0f;
 
@@ -49,6 +51,9 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
     private Circle ball;
     private CircleBody2D ballBody;
     private CirclePolygonCollision2D ballCollision;
+
+    private final Vector2D initBallVelocity = new Vector2D(0, 0);
+    private final Vector2D initBallPosition = new Vector2D(-0.25f, 1.0f);
 
     int rockCount;
     private Circle[] rocks;
@@ -81,8 +86,8 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
 
         ballBody = new CircleBody2D(
                 1,
-                new Vector2D(-0.25f, 1.0f),
-                new Vector2D(0.0f, 0.0f),
+                initBallPosition,
+                initBallVelocity,
                 ballRadius
         );
 
@@ -162,6 +167,11 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
             rock.draw(projMatrix, viewMatrix, lightPos);
         }
 
+        try {
+            Thread.sleep(delay);
+        } catch (InterruptedException e) {
+            // do nothing
+        }
     }
 
     @Override
@@ -220,5 +230,18 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
         }
 
         return null;
+    }
+
+    public void setDelay(int delay) {
+        if (delay < 0) {
+            delay = 0;
+        }
+
+        this.delay = delay;
+    }
+
+    public void initBall() {
+        ballBody.setVelocity(initBallVelocity);
+        ballBody.setPosition(initBallPosition);
     }
 }

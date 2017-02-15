@@ -26,13 +26,20 @@
             android:layout_height="0dp"
             android:layout_weight="1" />
 
+        <SeekBar
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/delayBar"
+            android:max="500"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="10dp" />
+
         <LinearLayout
             android:id="@+id/buttonLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:orientation="horizontal"
-            android:paddingTop="5dp">
+            android:orientation="horizontal">
 
             <Button
                 android:id="@+id/resetButton"
